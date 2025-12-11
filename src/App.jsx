@@ -1,3 +1,6 @@
+import Pagination from "./components/Pagination";
+import PokemonList from "./components/PokemonList";
+import PokemonFilters from "./components/PokemonFilters";
 import { useState, useEffect } from "react";
 
 function App() {
@@ -10,14 +13,23 @@ function App() {
   const [selectedType, setSelectedType] = useState([]);
 
   const types = ["grass", "poison", "fire"];
-  console.log(selectedType);
+
+  //paginacion
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(0);
+  const [limit, setLimit] = useState(20);
+  const offset = (currentPage - 1) * limit;
 
   async function fetchData() {
     try {
       setLoading(true);
-      const res = await fetch("https://pokeapi.co/api/v2/pokemon");
+      const res = await fetch(
+        `https://pokeapi.co/api/v2/pokemon?limit=${limit}&offset=${offset}`
+      );
       if (!res.ok) throw new Error("Data not founded");
       const data = await res.json();
+
+      const totalPagesCalculadas = Math.ceil(data.count / limit);
 
       //detalles de los pokemons
 
@@ -29,6 +41,7 @@ function App() {
       );
 
       setPokemons(pokemonDetails);
+      setTotalPages(totalPagesCalculadas);
     } catch (error) {
       setError(error.message);
     } finally {
@@ -54,7 +67,7 @@ function App() {
 
   useEffect(() => {
     fetchData();
-  }, []);
+  }, [currentPage, limit]);
 
   const filteredPokemons = pokemons.filter((pokemon) => {
     return (
@@ -64,34 +77,17 @@ function App() {
     );
   });
 
-  console.log(filteredPokemons);
-
   return (
     <>
       <div className="container" style={{ margin: "80px" }}>
-        <div className="header">
-          <input
-            type="text"
-            placeholder="Search Pokemon by name..."
-            style={{ marginBottom: "30px", width: "500px", height: "30px" }}
-            value={searchPokemon}
-            onChange={handleFilterPokemon}
-          />
-          <button onClick={() => handleClearFilters()}>Clear filters</button>
-          {types.map((type) => {
-            return (
-              <button
-                key={type}
-                style={{ border: "1px solid black", borderRadius: "15%" }}
-                //onClick={() => setSelectedType(type)}
-                onClick={() => handleTypeClick(type)}
-              >
-                {type}
-              </button>
-            );
-          })}
-          <button onClick={() => setSelectedType([])}>All</button>
-        </div>
+        <PokemonFilters
+          searchPokemon={searchPokemon}
+          onSearchChange={handleFilterPokemon}
+          types={types}
+          onClear={handleClearFilters}
+          onTypeClick={handleTypeClick}
+          setSelectedType={setSelectedType}
+        />
         <div
           className="main-container"
           style={{
@@ -105,36 +101,13 @@ function App() {
           {loading && <h1>Loading...</h1>}
           {error && <h1>{error}</h1>}
 
-          {filteredPokemons.map((pokemon) => (
-            <div
-              key={pokemon.id}
-              style={{
-                border: "2px solid black",
-                textAlign: "center",
-                padding: "10px",
-              }}
-            >
-              <img
-                src={
-                  pokemon.sprites.other["official-artwork"].front_default ||
-                  pokemon.sprites.other.dream_world.front_default
-                }
-                alt={pokemon.name}
-                style={{ width: "150px", height: "150px", padding: "5px" }}
-              />
-              <div>
-                <span>{`#${String(pokemon.id).padStart(3, 0)}`}</span>
-              </div>
-              <h2>{pokemon?.name}</h2>
-
-              <div>
-                {pokemon.types.map((t) => (
-                  <span key={t.type.name}>{t.type.name} </span>
-                ))}
-              </div>
-            </div>
-          ))}
+          <PokemonList pokemons={filteredPokemons} />
         </div>
+        <Pagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onChangePage={setCurrentPage}
+        />
       </div>
     </>
   );
