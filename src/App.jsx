@@ -12,7 +12,7 @@ function App() {
   const [searchPokemon, setSearchPokemon] = useState("");
   const [selectedType, setSelectedType] = useState([]);
 
-  const types = ["grass", "poison", "fire"];
+  const [types, setTypes] = useState([]);
 
   //paginacion
   const [currentPage, setCurrentPage] = useState(1);
@@ -49,6 +49,22 @@ function App() {
     }
   }
 
+  async function fetchPokemonTypes() {
+    try {
+      const res = await fetch("https://pokeapi.co/api/v2/type");
+      if (!res.ok) throw new Error("Types not founded");
+      const dataTypes = await res.json();
+
+      const pokemonTypes = dataTypes.results
+        .map((type) => type.name)
+        .filter((t) => t !== "unknown" && t !== "shadow");
+
+      setTypes(pokemonTypes);
+    } catch (error) {
+      setError(error.message);
+    }
+  }
+
   function handleFilterPokemon(e) {
     setSearchPokemon(e.target.value);
   }
@@ -69,6 +85,10 @@ function App() {
     fetchData();
   }, [currentPage, limit]);
 
+  useEffect(() => {
+    fetchPokemonTypes();
+  }, []);
+
   const filteredPokemons = pokemons.filter((pokemon) => {
     return (
       pokemon.name.toLowerCase().includes(searchPokemon.toLowerCase()) &&
@@ -79,30 +99,21 @@ function App() {
 
   return (
     <>
-      <div className="container" style={{ margin: "80px" }}>
+      <div className="min-h-screen bg-slate-100 px-6 py-10">
         <PokemonFilters
           searchPokemon={searchPokemon}
           onSearchChange={handleFilterPokemon}
           types={types}
           onClear={handleClearFilters}
           onTypeClick={handleTypeClick}
-          setSelectedType={setSelectedType}
+          selectedType={selectedType}
         />
-        <div
-          className="main-container"
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            gap: "15px",
-            flexWrap: "wrap",
-            marginBottom: "10px",
-          }}
-        >
-          {loading && <h1>Loading...</h1>}
-          {error && <h1>{error}</h1>}
 
-          <PokemonList pokemons={filteredPokemons} />
-        </div>
+        {loading && <h1>Loading...</h1>}
+        {error && <h1>{error}</h1>}
+
+        <PokemonList pokemons={filteredPokemons} />
+
         <Pagination
           currentPage={currentPage}
           totalPages={totalPages}
