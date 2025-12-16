@@ -26,7 +26,9 @@ function PokemonFilters({
           return (
             <button
               key={type}
-              className={`px-4 py-1 rounded-full text-sm font-medium capitalize ${colorClass} transition-all duration-200 ${
+              className={`px-4 py-1 rounded-full text-sm font-medium capitalize ${
+                colorClass.bg
+              } transition-all duration-200 ${
                 selectedType.includes(type) ? activeType : inactiveType
               }`}
               onClick={() => onTypeClick(type)}

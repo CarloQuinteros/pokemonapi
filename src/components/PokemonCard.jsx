@@ -1,5 +1,6 @@
 import { typeColors } from "../utils/typeColors";
-function PokemonCard({ pokemon }) {
+
+function PokemonCard({ pokemon, handleOpenModal }) {
   const image =
     pokemon.sprites.other["official-artwork"].front_default ||
     pokemon.sprites.other.dream_world.front_default ||
@@ -7,7 +8,12 @@ function PokemonCard({ pokemon }) {
     pokemon.sprites.front_default;
   return (
     <div className="bg-white rounded-2xl p-4 shadow-md hover:shadow-xl hover:scale-105 transition cursor-pointer flex flex-col items-center text-center">
-      <img src={image} alt={pokemon.name} className="w-36 h-36 mx-auto mb-2" />
+      <img
+        src={image}
+        alt={pokemon.name}
+        className="w-36 h-36 mx-auto mb-2"
+        onClick={() => handleOpenModal(pokemon)}
+      />
       <div>
         <span className="text-sm text-slate-400 font-mono mb-1">{`#${String(
           pokemon.id
@@ -24,7 +30,7 @@ function PokemonCard({ pokemon }) {
           return (
             <span
               key={typeName}
-              className={`px-3 py-1 text-xs rounded-full capitalize ${colorClass}`}
+              className={`px-3 py-1 text-xs rounded-full capitalize ${colorClass.bg}`}
             >
               {typeName}
             </span>

@@ -1,6 +1,7 @@
 import Pagination from "./components/Pagination";
 import PokemonList from "./components/PokemonList";
 import PokemonFilters from "./components/PokemonFilters";
+import PokemonModal from "./components/PokemonModal";
 import { useState, useEffect } from "react";
 
 function App() {
@@ -19,6 +20,14 @@ function App() {
   const [totalPages, setTotalPages] = useState(0);
   const [limit, setLimit] = useState(20);
   const offset = (currentPage - 1) * limit;
+
+  //modal
+
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedPokemon, setSelectedPokemon] = useState(null);
+  const [speciesData, setSpeciesData] = useState(null);
+
+  const [evolutionData, setEvolutionData] = useState(null);
 
   async function fetchData() {
     try {
@@ -48,7 +57,7 @@ function App() {
       setLoading(false);
     }
   }
-
+  //data for types of pokemon
   async function fetchPokemonTypes() {
     try {
       const res = await fetch("https://pokeapi.co/api/v2/type");
@@ -60,6 +69,35 @@ function App() {
         .filter((t) => t !== "unknown" && t !== "shadow");
 
       setTypes(pokemonTypes);
+    } catch (error) {
+      setError(error.message);
+    }
+  }
+
+  //data for modal...additional info about pokemon
+  async function fetchSpeciesData() {
+    try {
+      const res = await fetch(
+        `https://pokeapi.co/api/v2/pokemon-species/${selectedPokemon.name}`
+      );
+      if (!res.ok) throw new Error("Species data not founded");
+
+      const data = await res.json();
+      setSpeciesData(data);
+    } catch (error) {
+      setError(error.message);
+    }
+  }
+
+  //Data for evolutional chain
+
+  async function fetchEvolutionData(chainUrl) {
+    try {
+      const res = await fetch(chainUrl);
+      if (!res.ok) throw new Error("Evolution data not founded");
+
+      const data = await res.json();
+      setEvolutionData(data);
     } catch (error) {
       setError(error.message);
     }
@@ -81,6 +119,16 @@ function App() {
     setSelectedType([]);
   }
 
+  function handleOpenModal(pokemon) {
+    setIsModalOpen(true);
+    setSelectedPokemon(pokemon);
+  }
+
+  function handleCloseModal() {
+    setIsModalOpen(false);
+    setSelectedPokemon(null);
+  }
+
   useEffect(() => {
     fetchData();
   }, [currentPage, limit]);
@@ -88,6 +136,17 @@ function App() {
   useEffect(() => {
     fetchPokemonTypes();
   }, []);
+
+  useEffect(() => {
+    if (!selectedPokemon) return;
+    setSpeciesData(null);
+    fetchSpeciesData();
+  }, [selectedPokemon]);
+
+  useEffect(() => {
+    if (!speciesData) return;
+    fetchEvolutionData(speciesData.evolution_chain.url);
+  }, [speciesData]);
 
   const filteredPokemons = pokemons.filter((pokemon) => {
     return (
@@ -112,7 +171,7 @@ function App() {
         {loading && <h1>Loading...</h1>}
         {error && <h1>{error}</h1>}
 
-        <PokemonList pokemons={filteredPokemons} />
+        <PokemonList pokemons={filteredPokemons} openModal={handleOpenModal} />
 
         <Pagination
           currentPage={currentPage}
@@ -120,6 +179,14 @@ function App() {
           onChangePage={setCurrentPage}
         />
       </div>
+      {isModalOpen && selectedPokemon && (
+        <PokemonModal
+          pokemon={selectedPokemon}
+          onClose={handleCloseModal}
+          speciesData={speciesData}
+          evolutionData={evolutionData}
+        />
+      )}
     </>
   );
 }
