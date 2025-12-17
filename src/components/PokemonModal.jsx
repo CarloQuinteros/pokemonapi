@@ -76,7 +76,7 @@ function PokemonModal({ pokemon, onClose, speciesData, evolutionData }) {
       <div
         className="relative bg-white md:rounded-2xl w-full md:max-w-5xl z-10  rounded-t-2xl
       transform transition-all duration-300 scale-95 opacity-0 animate-modal
-       grid grid-cols-1 md:grid-cols-2 max-h-[85vh] overflow-y-auto md:overflow-hidden overscroll-contain"
+       grid grid-cols-1 md:grid-cols-2 max-h-[85vh] overscroll-contain"
       >
         <button
           onClick={onClose}
@@ -94,7 +94,7 @@ function PokemonModal({ pokemon, onClose, speciesData, evolutionData }) {
             />
           </div>
         </div>
-        <div className="p-4 md:p-6 space-y-4 overflow-y-auto">
+        <div className="p-4 md:p-6 space-y-4 overflow-y-auto max-h-[85vh]">
           <h1 className="text-2xl font-bold capitalize mt-4">{pokemon.name}</h1>
           <div className="flex gap-2">
             <span className="text-md text-slate-400 font-mono mb-1">{`#${String(
