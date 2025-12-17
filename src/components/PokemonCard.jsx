@@ -5,7 +5,8 @@ function PokemonCard({ pokemon, handleOpenModal }) {
     pokemon.sprites.other["official-artwork"].front_default ||
     pokemon.sprites.other.dream_world.front_default ||
     pokemon.sprites.other.home.front_default ||
-    pokemon.sprites.front_default;
+    pokemon.sprites.front_default ||
+    "/pokeball.png";
   return (
     <div className="bg-white rounded-2xl p-4 shadow-md hover:shadow-xl hover:scale-105 transition cursor-pointer flex flex-col items-center text-center">
       <img

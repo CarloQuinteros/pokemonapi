@@ -2,24 +2,23 @@ import Pagination from "./components/Pagination";
 import PokemonList from "./components/PokemonList";
 import PokemonFilters from "./components/PokemonFilters";
 import PokemonModal from "./components/PokemonModal";
+import Header from "./components/Header";
 import { useState, useEffect } from "react";
 
 function App() {
   // fetch de la api de pokemon
 
-  const [pokemons, setPokemons] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [searchPokemon, setSearchPokemon] = useState("");
   const [selectedType, setSelectedType] = useState([]);
+  const [allPokemons, setAllPokemons] = useState([]);
 
   const [types, setTypes] = useState([]);
 
   //paginacion
   const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(0);
   const [limit, setLimit] = useState(20);
-  const offset = (currentPage - 1) * limit;
 
   //modal
 
@@ -29,34 +28,6 @@ function App() {
 
   const [evolutionData, setEvolutionData] = useState(null);
 
-  async function fetchData() {
-    try {
-      setLoading(true);
-      const res = await fetch(
-        `https://pokeapi.co/api/v2/pokemon?limit=${limit}&offset=${offset}`
-      );
-      if (!res.ok) throw new Error("Data not founded");
-      const data = await res.json();
-
-      const totalPagesCalculadas = Math.ceil(data.count / limit);
-
-      //detalles de los pokemons
-
-      const pokemonDetails = await Promise.all(
-        data.results.map(async (pokemon) => {
-          const res = await fetch(pokemon.url);
-          return res.json();
-        })
-      );
-
-      setPokemons(pokemonDetails);
-      setTotalPages(totalPagesCalculadas);
-    } catch (error) {
-      setError(error.message);
-    } finally {
-      setLoading(false);
-    }
-  }
   //data for types of pokemon
   async function fetchPokemonTypes() {
     try {
@@ -103,6 +74,31 @@ function App() {
     }
   }
 
+  //Fetch many pokemons for filter
+  async function FetchAllPokemons() {
+    try {
+      setLoading(true);
+      const res = await fetch(
+        "https://pokeapi.co/api/v2/pokemon?limit=300&offset=0"
+      );
+      if (!res.ok) throw new Error("Data of all pokemon not founded");
+
+      const allPokemon = await res.json();
+
+      const allDetailPokemons = await Promise.all(
+        allPokemon.results.map(async (pokemon) => {
+          const res = await fetch(pokemon.url);
+          return res.json();
+        })
+      );
+
+      setAllPokemons(allDetailPokemons);
+    } catch (error) {
+      setError(error.message);
+    } finally {
+      setLoading(false);
+    }
+  }
   function handleFilterPokemon(e) {
     setSearchPokemon(e.target.value);
   }
@@ -120,6 +116,9 @@ function App() {
   }
 
   function handleOpenModal(pokemon) {
+    setError(null);
+    setSpeciesData(null);
+    setEvolutionData(null);
     setIsModalOpen(true);
     setSelectedPokemon(pokemon);
   }
@@ -127,11 +126,27 @@ function App() {
   function handleCloseModal() {
     setIsModalOpen(false);
     setSelectedPokemon(null);
+    setSpeciesData(null);
+    setEvolutionData(null);
+    setError(null);
   }
 
-  useEffect(() => {
-    fetchData();
-  }, [currentPage, limit]);
+  const filteredPokemons = allPokemons.filter((pokemon) => {
+    const matchName = pokemon.name
+      .toLowerCase()
+      .includes(searchPokemon.toLowerCase());
+    const matchType =
+      selectedType.length === 0 ||
+      pokemon.types.some((t) => selectedType.includes(t.type.name));
+    return matchName && matchType;
+  });
+
+  const totalPages = Math.ceil(filteredPokemons.length / limit);
+
+  const paginatedPokemons = filteredPokemons.slice(
+    (currentPage - 1) * limit,
+    currentPage * limit
+  );
 
   useEffect(() => {
     fetchPokemonTypes();
@@ -148,16 +163,21 @@ function App() {
     fetchEvolutionData(speciesData.evolution_chain.url);
   }, [speciesData]);
 
-  const filteredPokemons = pokemons.filter((pokemon) => {
-    return (
-      pokemon.name.toLowerCase().includes(searchPokemon.toLowerCase()) &&
-      (selectedType.length === 0 ||
-        pokemon.types.some((t) => selectedType.includes(t.type.name)))
-    );
-  });
+  useEffect(() => {
+    FetchAllPokemons();
+  }, []);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchPokemon, selectedType]);
+
+  useEffect(() => {
+    if (currentPage > totalPages) setCurrentPage(1);
+  }, [totalPages]);
 
   return (
     <>
+      <Header />
       <div className="min-h-screen bg-slate-100 px-6 py-10">
         <PokemonFilters
           searchPokemon={searchPokemon}
@@ -171,13 +191,14 @@ function App() {
         {loading && <h1>Loading...</h1>}
         {error && <h1>{error}</h1>}
 
-        <PokemonList pokemons={filteredPokemons} openModal={handleOpenModal} />
-
-        <Pagination
-          currentPage={currentPage}
-          totalPages={totalPages}
-          onChangePage={setCurrentPage}
-        />
+        <PokemonList pokemons={paginatedPokemons} openModal={handleOpenModal} />
+        {totalPages > 1 && (
+          <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onChangePage={setCurrentPage}
+          />
+        )}
       </div>
       {isModalOpen && selectedPokemon && (
         <PokemonModal
