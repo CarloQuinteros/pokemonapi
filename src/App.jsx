@@ -8,7 +8,7 @@ import { useState, useEffect } from "react";
 function App() {
   // fetch de la api de pokemon
 
-  const [loading, setLoading] = useState(true);
+  const [loadingDetails, setLoadingDetails] = useState(false);
   const [error, setError] = useState(null);
   const [searchPokemon, setSearchPokemon] = useState("");
   const [selectedType, setSelectedType] = useState([]);
@@ -18,7 +18,7 @@ function App() {
 
   //paginacion
   const [currentPage, setCurrentPage] = useState(1);
-  const [limit, setLimit] = useState(20);
+  const [limit] = useState(20);
 
   //modal
 
@@ -27,6 +27,8 @@ function App() {
   const [speciesData, setSpeciesData] = useState(null);
 
   const [evolutionData, setEvolutionData] = useState(null);
+
+  const [visiblePokemons, setVisiblePokemons] = useState([]);
 
   //data for types of pokemon
   async function fetchPokemonTypes() {
@@ -75,44 +77,67 @@ function App() {
   }
 
   //Fetch many pokemons for filter
-  async function FetchAllPokemons() {
+  // async function FetchAllPokemons() {
+  //   try {
+  //     setError(null);
+  //     const res = await fetch(
+  //       "https://pokeapi.co/api/v2/pokemon?limit=2000&offset=0"
+  //     );
+  //     if (!res.ok) throw new Error("Data of all pokemon not founded");
+
+  //     const allPokemon = await res.json();
+
+  //     setAllPokemons(allPokemon.results);
+  //   } catch (error) {
+  //     setError(error.message);
+  //   }
+  // }
+  async function fetchPokemonListByType(type) {
+    setError(null);
+    setCurrentPage(1);
+
     try {
-      setLoading(true);
-      const res = await fetch(
-        "https://pokeapi.co/api/v2/pokemon?limit=300&offset=0"
-      );
-      if (!res.ok) throw new Error("Data of all pokemon not founded");
+      let results = [];
 
-      const allPokemon = await res.json();
+      if (!type) {
+        // ALL
+        const res = await fetch(
+          "https://pokeapi.co/api/v2/pokemon?limit=2000&offset=0"
+        );
+        const data = await res.json();
+        results = data.results;
+      } else {
+        // BY TYPE
+        const res = await fetch(`https://pokeapi.co/api/v2/type/${type}`);
+        const data = await res.json();
 
-      const allDetailPokemons = await Promise.all(
-        allPokemon.results.map(async (pokemon) => {
-          const res = await fetch(pokemon.url);
-          return res.json();
-        })
-      );
+        results = data.pokemon.map((p) => ({
+          name: p.pokemon.name,
+          url: p.pokemon.url,
+        }));
+      }
 
-      setAllPokemons(allDetailPokemons);
-    } catch (error) {
-      setError(error.message);
-    } finally {
-      setLoading(false);
+      setAllPokemons(results);
+    } catch (e) {
+      setError(e.message);
     }
   }
+
   function handleFilterPokemon(e) {
     setSearchPokemon(e.target.value);
   }
 
   function handleTypeClick(type) {
-    if (selectedType.includes(type)) {
-      setSelectedType(selectedType.filter((t) => t !== type));
-    } else {
-      setSelectedType([...selectedType, type]);
-    }
+    const newTypes = selectedType.includes(type) ? [] : [type];
+
+    setSelectedType(newTypes);
+    fetchPokemonListByType(newTypes[0]);
   }
+
   function handleClearFilters() {
     setSearchPokemon("");
     setSelectedType([]);
+    fetchPokemonListByType(null);
   }
 
   function handleOpenModal(pokemon) {
@@ -135,10 +160,10 @@ function App() {
     const matchName = pokemon.name
       .toLowerCase()
       .includes(searchPokemon.toLowerCase());
-    const matchType =
-      selectedType.length === 0 ||
-      pokemon.types.some((t) => selectedType.includes(t.type.name));
-    return matchName && matchType;
+    // const matchType =
+    //   selectedType.length === 0 ||
+    //   pokemon.types.some((t) => selectedType.includes(t.type.name));
+    return matchName; // && matchType;
   });
 
   const totalPages = Math.ceil(filteredPokemons.length / limit);
@@ -164,16 +189,34 @@ function App() {
   }, [speciesData]);
 
   useEffect(() => {
-    FetchAllPokemons();
+    fetchPokemonListByType();
   }, []);
 
   useEffect(() => {
-    setCurrentPage(1);
-  }, [searchPokemon, selectedType]);
+    if (paginatedPokemons.length === 0) return;
 
-  useEffect(() => {
-    if (currentPage > totalPages) setCurrentPage(1);
-  }, [totalPages]);
+    let cancelled = false;
+
+    async function fetchDetails() {
+      try {
+        setLoadingDetails(true);
+
+        const details = await Promise.all(
+          paginatedPokemons.map((p) => fetch(p.url).then((res) => res.json()))
+        );
+
+        if (!cancelled) setVisiblePokemons(details);
+      } finally {
+        if (!cancelled) setLoadingDetails(false);
+      }
+    }
+
+    fetchDetails();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [paginatedPokemons]);
 
   return (
     <>
@@ -188,10 +231,15 @@ function App() {
           selectedType={selectedType}
         />
 
-        {loading && <h1>Loading...</h1>}
+        {loadingDetails && visiblePokemons.length === 0 && (
+          <div className="text-center py-10 text-slate-400">
+            Loading Pokémon...
+          </div>
+        )}
+
         {error && <h1>{error}</h1>}
 
-        <PokemonList pokemons={paginatedPokemons} openModal={handleOpenModal} />
+        <PokemonList pokemons={visiblePokemons} openModal={handleOpenModal} />
         {totalPages > 1 && (
           <Pagination
             currentPage={currentPage}

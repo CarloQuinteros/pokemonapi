@@ -68,15 +68,15 @@ function PokemonModal({ pokemon, onClose, speciesData, evolutionData }) {
     : [];
 
   return (
-    <div className="fixed inset-0 z-50 flex items-start md:items-center justify-center overflow-hidden">
+    <div className="fixed inset-0 z-50 flex items-end md:items-center justify-center">
       {/* Overlay */}
       <div className="absolute inset-0 bg-black/50" onClick={onClose} />
 
       {/* Modal */}
       <div
-        className="relative bg-white rounded-2xl w-full max-w-5xl z-10 
+        className="relative bg-white md:rounded-2xl w-full md:max-w-5xl z-10  rounded-t-2xl
       transform transition-all duration-300 scale-95 opacity-0 animate-modal
-       grid grid-cols-1 md:grid-cols-2 max-h-[90svh] overflow-y-auto md:overflow-hidden overscroll-contain"
+       grid grid-cols-1 md:grid-cols-2 max-h-[85vh] overflow-y-auto md:overflow-hidden overscroll-contain"
       >
         <button
           onClick={onClose}
@@ -86,15 +86,15 @@ function PokemonModal({ pokemon, onClose, speciesData, evolutionData }) {
         </button>
 
         <div className={`flex items-center justify-center ${colors.bg} `}>
-          <div className="bg-white/80 rounded-2xl p-6 shadow-inner">
+          <div className="bg-white/80 rounded-xl p-4 shadow-inner">
             <img
               src={image}
               alt={pokemon.name}
-              className="w-32 h-32 md:w-48 md:h-48 object-contain"
+              className="w-28 h-28 md:w-48 md:h-48 object-contain"
             />
           </div>
         </div>
-        <div className="p-4 md:p-6 space-y-3 md:space-y-4 md:overflow-y-auto">
+        <div className="p-4 md:p-6 space-y-4 overflow-y-auto">
           <h1 className="text-2xl font-bold capitalize mt-4">{pokemon.name}</h1>
           <div className="flex gap-2">
             <span className="text-md text-slate-400 font-mono mb-1">{`#${String(
@@ -139,8 +139,8 @@ function PokemonModal({ pokemon, onClose, speciesData, evolutionData }) {
               const statName = p.stat.name;
               const percentage = Math.round((p.base_stat / 150) * 100);
               return (
-                <div key={statName} className="flex items-center gap-3">
-                  <span className="w-28 text-sm capitalize">
+                <div key={statName} className="flex items-center gap-2">
+                  <span className="w-24 text-xs md:text-sm capitalize">
                     {statName.replace("-", " ")}{" "}
                   </span>
                   <div className="flex-1 bg-slate-200 rounded-full h-3 overflow-hidden">
