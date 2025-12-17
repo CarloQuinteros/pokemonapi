@@ -1,5 +1,14 @@
 import { typeColors } from "../utils/typeColors";
+import { useEffect } from "react";
+
 function PokemonModal({ pokemon, onClose, speciesData, evolutionData }) {
+  useEffect(() => {
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = prev;
+    };
+  }, []);
   if (!pokemon) return null;
 
   if (!speciesData) {
@@ -59,7 +68,7 @@ function PokemonModal({ pokemon, onClose, speciesData, evolutionData }) {
     : [];
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
+    <div className="fixed inset-0 z-50 flex items-start md:items-center justify-center overflow-hidden">
       {/* Overlay */}
       <div className="absolute inset-0 bg-black/50" onClick={onClose} />
 
@@ -67,11 +76,11 @@ function PokemonModal({ pokemon, onClose, speciesData, evolutionData }) {
       <div
         className="relative bg-white rounded-2xl w-full max-w-5xl z-10 
       transform transition-all duration-300 scale-95 opacity-0 animate-modal
-      overflow-hidden grid grid-cols-2 "
+       grid grid-cols-1 md:grid-cols-2 max-h-[90svh] overflow-y-auto md:overflow-hidden overscroll-contain"
       >
         <button
           onClick={onClose}
-          className="absolute top-3 right-3 text-xl font-bold"
+          className="fixed md:absolute top-4 right-4 z-50"
         >
           ✕
         </button>
@@ -81,11 +90,11 @@ function PokemonModal({ pokemon, onClose, speciesData, evolutionData }) {
             <img
               src={image}
               alt={pokemon.name}
-              className="w-48 h-48 object-contain"
+              className="w-32 h-32 md:w-48 md:h-48 object-contain"
             />
           </div>
         </div>
-        <div className="ml-6 p-6 space-y-4">
+        <div className="p-4 md:p-6 space-y-3 md:space-y-4 md:overflow-y-auto">
           <h1 className="text-2xl font-bold capitalize mt-4">{pokemon.name}</h1>
           <div className="flex gap-2">
             <span className="text-md text-slate-400 font-mono mb-1">{`#${String(
