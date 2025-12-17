@@ -16,7 +16,8 @@ function PokemonModal({ pokemon, onClose, speciesData, evolutionData }) {
 
   const image =
     pokemon.sprites.other["official-artwork"].front_default ||
-    pokemon.sprites.front_default;
+    pokemon.sprites.front_default ||
+    "/pokeball.png";
 
   const pokemonEntry = speciesData.flavor_text_entries.find(
     (entry) => entry.language.name === "en"
